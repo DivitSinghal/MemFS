@@ -6,12 +6,13 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import axios = require('axios');
 
 
-const API_ROOT = "https://instabase.com/api/v1"
-const DRIVE_API_ROOT = 'drives'
-const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/fileFromInstabase.py"
-const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR"
+const API_ROOT = "https://instabase.com/api/v1";
+const DRIVE_API_ROOT = 'drives';
+const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/fileFromInstabase.py";
+const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR";
 
 export class File implements vscode.FileStat {
 
@@ -80,8 +81,6 @@ export class MemFS implements vscode.FileSystemProvider {
         console.log("uri: ", uri);
         if(uri.path === '/fileFromInstabase.py'){
             //api call
-            const axios = require('axios');
-
             
             
             const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
@@ -137,7 +136,6 @@ export class MemFS implements vscode.FileSystemProvider {
             let cursor=0
             let fileData=content
 
-            const axios = require('axios');
 
             const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
             var api_args={
