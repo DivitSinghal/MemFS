@@ -6,9 +6,6 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-// import * as axios from 'axios';
-// import axios as axios
-// const axios = require('axios')
 
 export class File implements vscode.FileStat {
 
@@ -72,7 +69,7 @@ export class MemFS implements vscode.FileSystemProvider {
 
     // --- manage file contents
 
-    async readFile(uri: vscode.Uri):Uint8Array {
+    async readFile(uri: vscode.Uri) {
 
         console.log("uri: ", uri);
         if(uri.path === '/fileFromInstabase.txt'){
@@ -104,7 +101,11 @@ export class MemFS implements vscode.FileSystemProvider {
                     console.error("Error completing the request :", res)
                 }
                 var retData = res.data
-                return retData
+                console.log("type: ",typeof retData)
+                console.log("retData: ",retData)
+                // return retData
+                var dataU8Array = new TextEncoder("utf-8").encode(retData);
+                return dataU8Array
             } catch(err) {
                 var msg = "Error in createDriveFolder:" + err
                 console.error(msg)
@@ -120,6 +121,7 @@ export class MemFS implements vscode.FileSystemProvider {
             return data;
         }
         throw vscode.FileSystemError.FileNotFound();
+
     }
 
     writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }): void {
