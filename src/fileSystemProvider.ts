@@ -72,13 +72,13 @@ export class MemFS implements vscode.FileSystemProvider {
     async readFile(uri: vscode.Uri) {
 
         console.log("uri: ", uri);
-        if(uri.path === '/fileFromInstabase.txt'){
+        if(uri.path === '/fileFromInstabase.py'){
             //api call
             const axios = require('axios');
 
             const API_ROOT = "https://instabase.com/api/v1"
             const DRIVE_API_ROOT = 'drives'
-            const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/custom.py"
+            const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/fileFromInstabase.py"
             const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR"
             
             
@@ -124,7 +124,61 @@ export class MemFS implements vscode.FileSystemProvider {
 
     }
 
-    writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }): void {
+    async writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }) {
+        
+        if(uri.path === '/fileFromInstabase.py'){
+
+            //api call
+            
+            let mimeType='py'
+            let ifExists='overwrite'
+            let cursor=0
+            let fileData=content
+
+            const axios = require('axios');
+
+            const API_ROOT = "https://instabase.com/api/v1"
+            const DRIVE_API_ROOT = 'drives'
+            const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/fileFromInstabase.py"
+            const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR"
+
+            const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
+            var api_args={
+                type: 'file',
+                cursor: cursor,
+                if_exists: ifExists,
+                mime_types: mimeType
+            }
+            const options = {
+                headers: {
+                    'Authorization': `Bearer ${API_TOKEN}`,
+                    'Instabase-API-Args': JSON.stringify(api_args),
+                    'Content-Type' : 'text/plain' 
+                }
+            }
+            try {
+                const res = await axios.post(url, fileData, options)
+                if (res.status != 200) {
+                    var msg = `Error completing the request : ${res}`
+                    console.error(msg)
+                    throw(msg)
+                }
+                var retData = res.data
+                if (retData.status !== 'OK') {
+                    console.error(`Could not write to file at ${path}: ${retData.msg}`)
+                }
+                // return retData
+            } catch(err) {
+                var msg = ("Error in createDriveFolder:", err)
+                console.error(msg)
+                console.error("URL:", url)
+                console.error("options:", options)
+                throw(msg)
+            }
+        
+        }
+        
+
         const basename = path.posix.basename(uri.path);
         const parent = this._lookupParentDirectory(uri);
         let entry = parent.entries.get(basename);
@@ -138,6 +192,9 @@ export class MemFS implements vscode.FileSystemProvider {
             throw vscode.FileSystemError.FileExists(uri);
         }
         if (!entry) {
+            if(uri.path === '/fileFromInstabase.txt'){
+                console.log('hereeeeeeeeeeee creating new file')
+            }
             entry = new File(basename);
             parent.entries.set(basename, entry);
             this._fireSoon({ type: vscode.FileChangeType.Created, uri });

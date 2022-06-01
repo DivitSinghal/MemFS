@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         initialized = true;
 
-        memFs.writeFile(vscode.Uri.parse(`memfs:/fileFromInstabase.txt`), Buffer.from('IB Rocks'), { create: true, overwrite: true });
+        memFs.writeFile(vscode.Uri.parse(`memfs:/fileFromInstabase.py`), Buffer.from('IB Rocks'), { create: true, overwrite: true });
 
 
         // most common files types
