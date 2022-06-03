@@ -6,6 +6,7 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+const axios = require('axios');
 
 export class File implements vscode.FileStat {
 
@@ -48,6 +49,11 @@ export class Directory implements vscode.FileStat {
 
 export type Entry = File | Directory;
 
+const API_ROOT = "https://instabase.com/api/v1"
+const DRIVE_API_ROOT = 'drives'
+const root_path = "DivitSinghal/UDF_Guide/fs/Instabase Drive"
+const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR"
+
 export class MemFS implements vscode.FileSystemProvider {
 
     root = new Directory('');
@@ -55,15 +61,73 @@ export class MemFS implements vscode.FileSystemProvider {
     // --- manage file metadata
 
     stat(uri: vscode.Uri): vscode.FileStat {
+        console.log("Inside Stat uri: ", uri);
         return this._lookup(uri, false);
     }
 
-    readDirectory(uri: vscode.Uri): [string, vscode.FileType][] {
+    // readDirectory(uri: vscode.Uri): [string, vscode.FileType][] {
+    async readDirectory(uri: vscode.Uri) {
+
+        console.log("Inside readDirectory")
+        console.log("uri: ", uri);
+
+        if(uri.path === '/Refiner 5 Lesson'){
+            console.log("IB File")
+            let path = root_path + uri.path
+            const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
+            console.log("url: ", url);
+            var api_args={
+                type: 'folder',
+                get_content: true,
+                get_metadata: true,
+                start_page_token: ''
+            }
+            const options = {
+                headers: {
+                    'Authorization': `Bearer ${API_TOKEN}`,
+                    'Instabase-API-Args': JSON.stringify(api_args)
+                }
+            }
+            try {
+                const res = await axios.get(url, options)
+                if (res.status != 200) {
+                    console.error("Error completing the request :", res)
+                }
+                console.log("res: ",res)
+                var retData = res.data
+                if (retData.status !== 'OK') {
+                	console.error(`Could not list folder content at ${path}: ${retData.msg}`)
+                }
+                var nodes = retData.nodes
+                const result = [];
+                for (var i=0; i < nodes.length; i++) {
+                    // result.push([nodes[i].name,nodes[i].type])
+                    if(nodes[i].type === "folder"){
+                        result.push([nodes[i].name,2])
+                    }
+                    else{
+                        result.push([nodes[i].name,1]);
+                    }
+                }
+                console.log("result of subtree: ",result)
+                return result
+            } catch(err) {
+                var msg = ("Error in createDriveFolder:", err)
+                console.error(msg)
+                console.error("URL:", url)
+                console.error("options:", options)
+                throw(msg)
+            }
+        }
+        
+        console.log("VS Code Sample File")
         const entry = this._lookupAsDirectory(uri, false);
+        console.log("entry: ",entry)
         const result: [string, vscode.FileType][] = [];
         for (const [name, child] of entry.entries) {
             result.push([name, child.type]);
         }
+        console.log("result of subtree: ",result)
         return result;
     }
 
@@ -71,17 +135,12 @@ export class MemFS implements vscode.FileSystemProvider {
 
     async readFile(uri: vscode.Uri) {
 
+        console.log("Inside readFile")
         console.log("uri: ", uri);
-        if(uri.path === '/fileFromInstabase.py'){
+        
+        if(uri.path.includes('Refiner')){
             //api call
-            const axios = require('axios');
-
-            const API_ROOT = "https://instabase.com/api/v1"
-            const DRIVE_API_ROOT = 'drives'
-            const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/fileFromInstabase.py"
-            const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR"
-            
-            
+            let path = root_path + uri.path
             const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
             console.log("url: ", url);
 
@@ -105,6 +164,7 @@ export class MemFS implements vscode.FileSystemProvider {
                 console.log("retData: ",retData)
                 // return retData
                 var dataU8Array = new TextEncoder("utf-8").encode(retData);
+                console.log("dataU8Array: ",dataU8Array)
                 return dataU8Array
             } catch(err) {
                 var msg = "Error in createDriveFolder:" + err
@@ -115,16 +175,21 @@ export class MemFS implements vscode.FileSystemProvider {
             }
         }
 
-        const data = this._lookupAsFile(uri, false).data;
-        if (data) {
-            console.log("data in Unit8Array:", data)
-            return data;
+        else{
+            const data = this._lookupAsFile(uri, false).data;
+            if (data) {
+                console.log("data in Unit8Array:", data)
+                return data;
+            }
+            throw vscode.FileSystemError.FileNotFound();
         }
-        throw vscode.FileSystemError.FileNotFound();
-
     }
 
     async writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }) {
+        
+        console.log("Inside writeFile")
+        console.log("uri: ", uri);
+        
         
         if(uri.path === '/fileFromInstabase.py'){
 
@@ -135,12 +200,7 @@ export class MemFS implements vscode.FileSystemProvider {
             let cursor=0
             let fileData=content
 
-            const axios = require('axios');
-
-            const API_ROOT = "https://instabase.com/api/v1"
-            const DRIVE_API_ROOT = 'drives'
-            const path = "DivitSinghal/UDF_Guide/fs/Instabase Drive/Refiner 5 Lesson/scripts/fileFromInstabase.py"
-            const API_TOKEN = "fuCMS6PBhMHMbHsavmUcRdDQIcLYwR"
+            let path = root_path + uri.path
 
             const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
             var api_args={
@@ -244,6 +304,10 @@ export class MemFS implements vscode.FileSystemProvider {
     }
 
     createDirectory(uri: vscode.Uri): void {
+        
+        console.log("Inside createDirectory")
+        console.log("uri: ", uri);
+        
         const basename = path.posix.basename(uri.path);
         const dirname = uri.with({ path: path.posix.dirname(uri.path) });
         const parent = this._lookupAsDirectory(dirname, false);

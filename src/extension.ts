@@ -53,7 +53,8 @@ export function activate(context: vscode.ExtensionContext) {
         memFs.writeFile(vscode.Uri.parse(`memfs:/file.yaml`), Buffer.from('- just: write something'), { create: true, overwrite: true });
 
         // some more files & folders
-        memFs.createDirectory(vscode.Uri.parse(`memfs:/folder/`));
+        memFs.createDirectory(vscode.Uri.parse(`memfs:/Refiner 5 Lesson`));
+        memFs.createDirectory(vscode.Uri.parse(`memfs:/folder`));
         memFs.createDirectory(vscode.Uri.parse(`memfs:/large/`));
         memFs.createDirectory(vscode.Uri.parse(`memfs:/xyz/`));
         memFs.createDirectory(vscode.Uri.parse(`memfs:/xyz/abc`));
