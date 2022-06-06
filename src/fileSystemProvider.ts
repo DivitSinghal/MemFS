@@ -70,8 +70,7 @@ export class MemFS implements vscode.FileSystemProvider {
 
         console.log("Inside readDirectory")
         console.log("uri: ", uri);
-
-        if(uri.path === '/Refiner 5 Lesson'){
+        if(uri.path.includes('/Refiner 5 Lesson')){
             console.log("IB File")
             let path = root_path + uri.path
             const url = `${API_ROOT}/${DRIVE_API_ROOT}/${path}`
@@ -99,14 +98,39 @@ export class MemFS implements vscode.FileSystemProvider {
                 	console.error(`Could not list folder content at ${path}: ${retData.msg}`)
                 }
                 var nodes = retData.nodes
-                const result = [];
+                const result: [string, vscode.FileType][] = [];
                 for (var i=0; i < nodes.length; i++) {
-                    // result.push([nodes[i].name,nodes[i].type])
+                    console.log("nodes[i]: ",nodes[i])
                     if(nodes[i].type === "folder"){
                         result.push([nodes[i].name,2])
+                        //createDir
+                        let lst = nodes[i].path.split('/')
+                        const basename = lst[lst.length - 1]
+                        console.log("basename: ",basename)
+                        const parent = this._lookupAsDirectory(uri, false);
+                        const entry = new Directory(basename);
+                        parent.entries.set(entry.name, entry);
+                        parent.mtime = nodes[i].metadata.modified_timestamp
+                        parent.size += 1;
                     }
                     else{
                         result.push([nodes[i].name,1]);
+                        ////createFile
+                        // let uri_temp = JSON.parse(JSON.stringify(uri));
+                        // let uri_temp = {...uri}
+                        // let uri_temp = uri
+                        // uri_temp.path = nodes[i].path
+                        // let options: { create: 1, overwrite: 0 }
+                        // let dataU8Array = new TextEncoder("utf-8").encode(nodes[i].data);
+                        // this.writeFile(uri,dataU8Array,options)
+                        let lst = nodes[i].path.split('/')
+                        const basename = lst[lst.length - 1]
+                        console.log("basename: ",basename)
+                        const parent = this._lookupAsDirectory(uri, false);
+                        const entry = new File(basename);
+                        parent.entries.set(basename, entry);
+                        parent.mtime = nodes[i].metadata.modified_timestamp
+                        parent.size += 1;
                     }
                 }
                 console.log("result of subtree: ",result)
@@ -119,16 +143,17 @@ export class MemFS implements vscode.FileSystemProvider {
                 throw(msg)
             }
         }
-        
-        console.log("VS Code Sample File")
-        const entry = this._lookupAsDirectory(uri, false);
-        console.log("entry: ",entry)
-        const result: [string, vscode.FileType][] = [];
-        for (const [name, child] of entry.entries) {
-            result.push([name, child.type]);
+        else{
+            console.log("VS Code Sample File")
+            const entry = this._lookupAsDirectory(uri, false);
+            console.log("entry: ",entry)
+            const result: [string, vscode.FileType][] = [];
+            for (const [name, child] of entry.entries) {
+                result.push([name, child.type]);
+            }
+            console.log("result of subtree: ",result)
+            return result;
         }
-        console.log("result of subtree: ",result)
-        return result;
     }
 
     // --- manage file contents
@@ -174,7 +199,6 @@ export class MemFS implements vscode.FileSystemProvider {
                 throw(msg)
             }
         }
-
         else{
             const data = this._lookupAsFile(uri, false).data;
             if (data) {
@@ -191,10 +215,8 @@ export class MemFS implements vscode.FileSystemProvider {
         console.log("uri: ", uri);
         
         
-        if(uri.path === '/fileFromInstabase.py'){
-
+        if(uri.path.includes('Refiner')){
             //api call
-            
             let mimeType='py'
             let ifExists='overwrite'
             let cursor=0
@@ -309,8 +331,11 @@ export class MemFS implements vscode.FileSystemProvider {
         console.log("uri: ", uri);
         
         const basename = path.posix.basename(uri.path);
+        console.log("basename: ",basename)
         const dirname = uri.with({ path: path.posix.dirname(uri.path) });
+        console.log("dirname: ",dirname)
         const parent = this._lookupAsDirectory(dirname, false);
+        console.log("parent: ",parent)
 
         const entry = new Directory(basename);
         parent.entries.set(entry.name, entry);
